@@ -1,6 +1,7 @@
-package main
+package vitessproxy
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -12,7 +13,9 @@ import (
 var execStatements = []string{"insert", "update", "delete", "create", "alter"}
 var selectStatements = []string{"select", "show"}
 
-type VitessHandler struct{}
+type VitessHandler struct {
+	DB *sql.DB
+}
 
 //handle COM_QUERY comamnd, like SELECT, INSERT, UPDATE, etc...
 //If Result has a Resultset (SELECT, SHOW, etc...), we will send this as the
@@ -22,16 +25,16 @@ func (h VitessHandler) HandleQuery(query string) (*mysql.Result, error) {
 	// Get the statement (first word of the query)
 	statement := strings.ToLower(strings.Split(query, " ")[0])
 	if contains(execStatements, statement) {
-		return executeQuery(query)
+		return h.executeQuery(query)
 	} else if contains(selectStatements, statement) {
-		return selectQuery(query)
+		return h.selectQuery(query)
 	}
 	return nil, errors.New("Unsupported statement")
 }
 
-func executeQuery(query string) (*mysql.Result, error) {
+func (h VitessHandler) executeQuery(query string) (*mysql.Result, error) {
 	fmt.Println("Updating/deleting/inserting into master...")
-	tx, err := vitessdb.Begin()
+	tx, err := h.DB.Begin()
 	if err != nil {
 		fmt.Printf("begin failed: %v\n", err)
 		return nil, err
@@ -50,8 +53,8 @@ func executeQuery(query string) (*mysql.Result, error) {
 	return &mysql.Result{0, 0, uint64(nrRows), nil}, nil
 }
 
-func selectQuery(query string) (*mysql.Result, error) {
-	rows, err := vitessdb.Query(query)
+func (h VitessHandler) selectQuery(query string) (*mysql.Result, error) {
+	rows, err := h.DB.Query(query)
 	if err != nil {
 		fmt.Printf("query failed: %v\n", err)
 		return &mysql.Result{0, 0, 0, nil}, err

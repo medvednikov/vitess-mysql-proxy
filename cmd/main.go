@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/medvednikov/vitess-mysql-proxy"
 	mysqlserver "github.com/siddontang/go-mysql/server"
 	"github.com/youtube/vitess/go/vt/vitessdriver"
 
@@ -56,7 +57,7 @@ func startMySQLServer() {
 
 func handleTCPConn(c net.Conn) {
 	// Create a connection with user root and an empty passowrd
-	conn, err := mysqlserver.NewConn(c, "root", "", VitessHandler{})
+	conn, err := mysqlserver.NewConn(c, "root", "", vitessproxy.VitessHandler{vitessdb})
 	if err != nil {
 		log.Println(err)
 	}
