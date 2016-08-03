@@ -109,6 +109,10 @@ func (h VitessHandler) HandleStmtExecute(context interface{}, query string, args
 	return nil, nil
 }
 
+func (h VitessHandler) HandleStmtClose(context interface{}) error {
+	return nil
+}
+
 //handle COM_INIT_DB command, you can check whether the dbName is valid, or other.
 func (h VitessHandler) UseDB(dbName string) error {
 	return nil
